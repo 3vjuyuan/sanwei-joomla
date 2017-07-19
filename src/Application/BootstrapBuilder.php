@@ -8,6 +8,7 @@
 
 namespace Sanwei\Joomla\Application;
 
+use Symfony\Component\Filesystem\Filesystem;
 
 class BootstrapBuilder
 {
@@ -15,8 +16,13 @@ class BootstrapBuilder
 
     protected $conf;
 
-    protected static function getDefaultJoomlaPath() {
-        return realpath(__DIR__ . '/../../../../joomla');
+    protected static function getJoomlaApplicationPath($path = '') {
+        $fs = new Filesystem();
+        if(is_dir($path)) {
+            return realpath($fs->isAbsolutePath($path) ? $path : APP_ROOT . DIRECTORY_SEPARATOR . $path);
+        } else {
+            return realpath(__DIR__ . '/../../../../joomla');
+        }
     }
 
     public function __construct()
@@ -41,9 +47,55 @@ class BootstrapBuilder
      */
     public function getBootstrap() {
         $this->initializeDefines();
+        $bootstrap = new Bootstrap();
 
-        //@todo Check the application is running as frontend or backend
-        return new Bootstrap($this->conf);
+        $appConf = $this->getApplicationConfigurations();
+        $bootstrap->setApplication($appConf['type']);
+        $bootstrap->setApplicationUriPath($appConf['app_uri']);
+
+        call_user_func_array(array($bootstrap, 'addRequiredFiles'), $appConf['requiredFiles']);
+
+        return $bootstrap;
+    }
+
+    /**
+     * Get the configuration for the application, which should be bootstrapped to
+     * and set the JPATH_BASE value, the root path for the current requested application.
+     *
+     */
+    protected function getApplicationConfigurations() {
+        $configurations = [];
+        $uriParameters = explode('/', trim($_SERVER['REQUEST_URI'], '/') . '/');
+        $appUriRequest = strpos($uriParameters[0], '.') === false ? $uriParameters[0] : $uriParameters[1];
+
+        // @todo remove framework.php
+        switch ($appUriRequest) {
+            case $this->conf['joomla']['admin_uri']:
+                define('JPATH_BASE', JPATH_ADMINISTRATOR);
+                $configurations['type'] = Bootstrap::APPLICATION_ADMIN;
+                $configurations['requiredFiles'] = [
+                    JPATH_BASE . '/includes/framework.php',
+                    JPATH_BASE . '/includes/helper.php',
+                    JPATH_BASE . '/includes/toolbar.php'
+                ];
+                break;
+            case 'install':
+                define('JPATH_BASE', JPATH_INSTALLATION);
+                $configurations['type'] = Bootstrap::APPLICATION_INSTALL;
+                break;
+            default:
+                $appUriRequest = isset($this->conf['joomla']['site_uri']) ? $this->conf['joomla']['site_uri'] : '';
+                define('JPATH_BASE', JPATH_SITE);
+                $configurations['type'] = Bootstrap::APPLICATION_SITE;
+                $configurations['requiredFiles'] = [
+                    JPATH_BASE . '/includes/framework.php',
+                ];
+        }
+
+        $configurations['app_uri'] = $appUriRequest;
+        define('JPATH_THEMES', JPATH_BASE . DIRECTORY_SEPARATOR . 'templates');
+
+        return $configurations;
     }
 
     protected function exitOnError($message) {
@@ -52,32 +104,19 @@ class BootstrapBuilder
     }
 
     public function initializeDefines() {
-        //@todo Use symfony file system isAbsolutePath to check if it is absolute path
-        $joomlaPath = is_dir($this->conf['joomla']['path']) ? $this->conf['joomla']['path'] : self::getDefaultJoomlaPath();
-        $joomlaIncludesPath = $joomlaPath . DIRECTORY_SEPARATOR . 'includes';
-
         define('_JDEFINES', 1);
+        define('APP_ROOT', $this->applicationRootPath);
+        define('APP_EXTENSIONS', APP_ROOT . DIRECTORY_SEPARATOR . 'extensions');
+        define('APP_THEMES', APP_EXTENSIONS . DIRECTORY_SEPARATOR . 'themes');
 
-        define('APPLICATION_ROOT', $this->applicationRootPath);
-
-        define('JPATH_ROOT',          $joomlaPath);
+        define('JPATH_ROOT',          self::getJoomlaApplicationPath($this->conf['joomla']['path']));
         define('JPATH_SITE',          JPATH_ROOT);
-        define('JPATH_CONFIGURATION', APPLICATION_ROOT);
+        define('JPATH_CONFIGURATION', APP_ROOT);
         define('JPATH_ADMINISTRATOR', JPATH_ROOT . DIRECTORY_SEPARATOR . 'administrator');
         define('JPATH_LIBRARIES',     JPATH_ROOT . DIRECTORY_SEPARATOR . 'libraries');
         define('JPATH_PLUGINS',       JPATH_ROOT . DIRECTORY_SEPARATOR . 'plugins');
-        define('JPATH_INSTALLATION',  APPLICATION_ROOT . DIRECTORY_SEPARATOR . 'installation');
-        define('JPATH_THEMES',        APPLICATION_ROOT . DIRECTORY_SEPARATOR . 'templates');
-        define('JPATH_CACHE',         APPLICATION_ROOT . DIRECTORY_SEPARATOR . 'cache');
+        define('JPATH_INSTALLATION',  APP_ROOT . DIRECTORY_SEPARATOR . 'installation');
+        define('JPATH_CACHE',         APP_ROOT . DIRECTORY_SEPARATOR . 'cache');
         define('JPATH_MANIFESTS',     JPATH_ADMINISTRATOR . DIRECTORY_SEPARATOR . 'manifests');
-
-        /**
-         * @todo Define different path for JPATH_BASE
-         * JPATH_BASE is the root path for the current requested application....
-         * so if you are in the administrator application, JPATH_BASE == JPATH_ADMINISTRATOR...
-         * if you are in the site application JPATH_BASE == JPATH_SITE...
-         * if you are in the installation application JPATH_BASE == JPATH_INSTALLATION.
-         */
-        define('JPATH_BASE', $joomlaPath);
     }
 }
