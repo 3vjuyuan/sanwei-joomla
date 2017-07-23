@@ -112,20 +112,22 @@ class Bootstrap
 
         /** @var JApplicationCms $app */
         // Instantiate the application.
+        $this->getApplication();
         $app = JFactory::getApplication($this->applicationName);
-
-        SiteUri::initializeUriInstances();
 
         // Execute the application.
         $app->execute();
     }
 
-    protected function initializeApplication(JApplicationCms $app)
+    protected function getApplication()
     {
+        JoomlaApplicationSite::initializeApplication();
+        $app = JFactory::getApplication($this->applicationName);
+
         // @todo Load the additional configurations
         // $app->loadConfiguration();
 
-        $app->set('site_uri', $this->applicationUriPath);
+//        $app->set('site_uri', $this->applicationUriPath);
     }
 
     protected function findFile($name)
