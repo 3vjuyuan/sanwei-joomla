@@ -10,6 +10,9 @@ use JApplicationWebClient;
 use JRoute;
 use JComponentHelper;
 use JPluginHelper;
+use JFilterInput;
+use JLanguageHelper;
+use JUri;
 
 /**
  * Joomla! Site Application class
@@ -873,6 +876,11 @@ class JoomlaApplicationSite extends JApplicationCms
      * @todo override the loadSystemUris function in JApplicationWeb
      */
     protected function loadSystemUris($requestUri = null) {
-        parent::loadSystemUris();
+      $uri = JUri::getInstance();
+      $path = $uri->getPath();
+      $path = str_replace('index.php','',$path);
+      $uri->setPath($path);
+
+      parent::loadSystemUris();
     }
 }

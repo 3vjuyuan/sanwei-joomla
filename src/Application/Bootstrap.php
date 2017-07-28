@@ -112,8 +112,8 @@ class Bootstrap
 
         /** @var JApplicationCms $app */
         // Instantiate the application.
-        $this->getApplication();
-        $app = JFactory::getApplication($this->applicationName);
+
+        $app = $this->getApplication();
 
         // Execute the application.
         $app->execute();
@@ -126,8 +126,9 @@ class Bootstrap
 
         // @todo Load the additional configurations
         // $app->loadConfiguration();
+        //$app->set('site_uri', $this->applicationUriPath);
 
-//        $app->set('site_uri', $this->applicationUriPath);
+        return $app;
     }
 
     protected function findFile($name)
