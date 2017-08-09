@@ -64,14 +64,18 @@ class BootstrapBuilder
      *
      */
     protected function getApplicationConfigurations() {
-        $configurations = [];
-        $uriParameters = explode('/', trim($_SERVER['REQUEST_URI'], '/') . '/');
-        $appUriRequest = strpos($uriParameters[0], '.') === false ? $uriParameters[0] : $uriParameters[1];
+      $configurations = [];
+        $uriParameters = explode('?', trim($_SERVER['REQUEST_URI'], '/') );
 
+//      $appUriRequest = strpos($uriParameters[0], '.') === false ? $uriParameters[0] : $uriParameters[1];
         // @todo remove framework.php
+      // todo 强行修改
+      $appUriRequest = $uriParameters[0];
+
         switch ($appUriRequest) {
             case $this->conf['joomla']['admin_uri']:
                 define('JPATH_BASE', JPATH_ADMINISTRATOR);
+
                 $configurations['type'] = Bootstrap::APPLICATION_ADMIN;
                 $configurations['requiredFiles'] = [
                     JPATH_BASE . '/includes/framework.php',
@@ -108,7 +112,7 @@ class BootstrapBuilder
         define('APP_ROOT', $this->applicationRootPath);
         define('APP_EXTENSIONS', APP_ROOT . DIRECTORY_SEPARATOR . 'extensions');
         define('APP_THEMES', APP_EXTENSIONS . DIRECTORY_SEPARATOR . 'themes');
-
+        define('ADMIN_URI',$this->conf['joomla']['admin_uri']);
         define('JPATH_ROOT',          self::getJoomlaApplicationPath($this->conf['joomla']['path']));
         define('JPATH_SITE',          JPATH_ROOT);
         define('JPATH_CONFIGURATION', APP_ROOT);

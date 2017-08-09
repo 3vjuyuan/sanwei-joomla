@@ -23,6 +23,8 @@ class JoomlaApplicationSite extends JApplicationCms
 {
     public static function initializeApplication() {
         self::$instances['site'] = new self();
+//        include_once 'JoomlaApplicationAdministrator.php';
+//        self::$instances['administrator'] = new JoomlaApplicationAdministrator();
     }
 
 	/**
@@ -128,7 +130,7 @@ class JoomlaApplicationSite extends JApplicationCms
 	public function dispatch($component = null)
 	{
 		// Get the component if not set.
-		if (!$component)
+ 		if (!$component)
 		{
 			$component = $this->input->getCmd('option', null);
 		}
@@ -802,6 +804,7 @@ class JoomlaApplicationSite extends JApplicationCms
 		parent::route();
 
 		$Itemid = $this->input->getInt('Itemid', null);
+
 		$this->authorise($Itemid);
 	}
 
@@ -880,7 +883,6 @@ class JoomlaApplicationSite extends JApplicationCms
       $path = $uri->getPath();
       $path = str_replace('index.php','',$path);
       $uri->setPath($path);
-
       parent::loadSystemUris();
     }
 }
