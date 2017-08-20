@@ -5,7 +5,8 @@ namespace Sanwei\Joomla\Application;
 use JApplicationCms;
 use JProfiler;
 use JFactory;
-use Sanwei\Joomla\Uri\SiteUri;
+use JLoader;
+use Sanwei\Joomla\Uri\JUri;
 
 /**
  * Class Bootstrap
@@ -23,7 +24,6 @@ class Bootstrap
         'administrator',
         'InstallationApplicationWeb'
     ];
-
 
     protected $loadPaths;
 
@@ -107,13 +107,20 @@ class Bootstrap
 
     protected function execute()
     {
+
+      JLoader::register('JUri',__DIR__ . '/../Uri/JUri.php');
+      JLoader::register('JHtmlSidebar',__DIR__ . '/../Uri/JHtmlSidebar.php');
+
+      JLoader::register('JAdminCssMenu',__DIR__ . '/../Uri/JAdminCssMenu.php');
+      JLoader::load('JAdminCssMenu');
         // Set profiler start time and memory usage and mark afterLoad in the profiler.
         JDEBUG ? JProfiler::getInstance('Application')->setStart($this->startTime, $this->startMem)->mark('afterLoad') : null;
 
         /** @var JApplicationCms $app */
         // Instantiate the application.
-        $this->getApplication();
-        $app = JFactory::getApplication($this->applicationName);
+
+        $app = $this->getApplication();
+
 
         // Execute the application.
         $app->execute();
@@ -126,8 +133,9 @@ class Bootstrap
 
         // @todo Load the additional configurations
         // $app->loadConfiguration();
+        //$app->set('site_uri', $this->applicationUriPath);
 
-//        $app->set('site_uri', $this->applicationUriPath);
+        return $app;
     }
 
     protected function findFile($name)
